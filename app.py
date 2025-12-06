@@ -1,5 +1,3 @@
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_extras.stylable_container import stylable_container
@@ -8,7 +6,6 @@ import pandas as pd
 import altair as alt
 import datetime  
 import requests
-import json
 import pandas as pd
 import folium
 from folium import IFrame
