@@ -1,0 +1,8 @@
+streamlit==1.51.0
+pandas==2.3.3
+requests==2.32.5
+psycopg2-binary==2.9.10
+streamlit-extras==0.7.8
+altair==5.5.0
+folium==0.20.0
+streamlit-folium==0.25.3
