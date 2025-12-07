@@ -35,6 +35,39 @@ PG_PASS = st.secrets.get("PG_PASS")
 PG_SSL  = st.secrets.get("PG_SSLMODE")  
 SNAPSHOT_BASE = st.secrets.get("SNAPSHOT_BASE", "http://127.0.0.1:9000/snapshot")
 
+def get_district_summary_from_df(df_filtered):
+    """
+    Build district summary using the already-filtered DataFrame (df_filtered).
+    Returns a list of dicts per district.
+    """
+
+    if df_filtered.empty:
+        return []
+
+    district_groups = df_filtered.groupby("district")
+
+    summary = []
+
+    for district, group in district_groups:
+        total = len(group)
+        finished = (group["state"] == "เสร็จสิ้น").sum()
+
+        # average duration from column duration_minutes_finished
+        if "duration_minutes_finished" in group.columns:
+            avg_duration = group.loc[group["duration_minutes_finished"] > 0, "duration_minutes_finished"].mean()
+        else:
+            avg_duration = None
+
+        summary.append({
+            "district": district,
+            "total": total,
+            "finished": finished,
+            "avg_duration": float(avg_duration) if avg_duration else 0,
+            "completion_rate": round((finished / total) * 100, 2) if total > 0 else 0
+        })
+
+    return summary
+
 
 def normalize(x):
     if not isinstance(x, str):
@@ -1598,7 +1631,7 @@ with tab1:
         'ป้อมปราบศัตรูพ่าย'
     ]
 
-    district_summary = get_district_summary(start_date=start_date, end_date=end_date)
+    district_summary = get_district_summary_from_df(df_filtered)
     district_summary_filtered = [d for d in district_summary if d['district'] in districts_full]
     df_district_summary = pd.DataFrame(district_summary_filtered)
     df_district_summary['completion_rate'] = (df_district_summary['finished'] / df_district_summary['total'] * 100).round(2)
@@ -1692,12 +1725,12 @@ with tab1:
         height=600
     )    
     
-    district_summary = get_district_summary(start_date=start_date, end_date=end_date)
+    district_summary = get_district_summary_from_df(df_filtered)
     district_summary_filtered = [d for d in district_summary if d['district'] in districts_full]
 
     df_district_summary = pd.DataFrame(district_summary_filtered)
     df_district_summary['completion_rate'] = (df_district_summary['finished'] / df_district_summary['total'] * 100).round(2)
-    df_district_summary['avg_duration'] = (df_district_summary['avg_duration'] / 60).round(2)  # แปลงเป็นชั่วโมง
+    df_district_summary['avg_duration'] = (df_district_summary['avg_duration'] / 60).round(2) 
 
     df_district_summary = df_district_summary.rename(columns={
         'district': 'เขต (District)',
@@ -1710,11 +1743,12 @@ with tab1:
         st.dataframe(df_district_summary)
     st.markdown("---")
         
-    if "type_filtered" not in df_filtered.columns:
-        if "type" in df_filtered.columns:
-            df_filtered["type_filtered"] = df_filtered["type"].fillna("ไม่ระบุ")
-        else:
-            df_filtered["type_filtered"] = "ไม่ระบุ"
+    # if "type_filtered" not in df_filtered.columns:
+    #     if "type" in df_filtered.columns:
+    #         df_filtered["type_filtered"] = df_filtered["type"].fillna("ไม่ระบุ")
+    #     else:
+    #         df_filtered["type_filtered"] = "ไม่ระบุ"
+    df_filtered["district"] = df_filtered["district"].fillna("").str.strip()
 
     district_count = df_filtered.groupby("district").size().reset_index(name="count")
 
