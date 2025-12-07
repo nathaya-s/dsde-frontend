@@ -246,7 +246,7 @@ selected_states = []
 
 
 st.set_page_config(
-    page_title="Smart Complaint Insight",
+    page_title="BKK CityLens",
     layout="wide",
 )
 
